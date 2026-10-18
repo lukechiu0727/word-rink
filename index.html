@@ -111,6 +111,7 @@ label.f{display:block;margin:12px 0 4px;font-weight:600;font-size:15px}
 .tog{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .sw{width:48px;height:28px;border-radius:14px;background:var(--line);position:relative}.sw.on{background:var(--green)}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}.sw.on::after{left:23px}
+.spk{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--ice2);font-size:16px;vertical-align:middle;margin-left:8px;flex:none}.spk:active{background:var(--line)}.spk.big{width:42px;height:42px;font-size:20px}
 .note{font-size:14px;color:var(--ink2);border:1.5px dashed var(--line);border-radius:10px;padding:10px;margin-top:10px}
 </style>
 </head>
@@ -697,7 +698,66 @@ scornful:[["scorn","a feeling that something is worthless"]],
 conscientious:[["conscientiously","in a careful, dutiful way"]],
 };
 
-const WORDS=MID.concat(MID2,UPPER);
+const T2RAW = {
+acrimonious:["adj","angry and bitter","尖刻的；激烈的",["bitter","hostile","resentful"],["The ___ argument between the two captains lasted the whole intermission.","The ___ rivalry ended with players refusing to shake hands.","The ___ chat after the loss got the lobby shut down."]],
+diffident:["adj","shy and lacking self-confidence","缺乏自信的",["shy","timid","unassertive"],["The ___ rookie barely spoke in the locker room.","The ___ freshman never asked for the ball.","The ___ new player never turned on her mic."]],
+ebullient:["adj","cheerful and full of energy","熱情洋溢的",["exuberant","bubbly","lively"],["The ___ coach hugged every player after the win.","The ___ bench jumped up after every three-pointer.","The ___ streamer cheered at every kill."]],
+erudite:["adj","having great knowledge from study","博學的",["learned","scholarly","knowledgeable"],["The ___ announcer knew the history of every team.","The ___ coach quoted stats from fifty years ago.","The ___ player knows the lore of every character."]],
+fastidious:["adj","very careful about details; fussy","挑剔的；一絲不苟的",["fussy","meticulous","particular"],["The ___ goalie tapes his stick the exact same way every game.","The ___ shooter wipes his shoes before every free throw.","The ___ builder redid the castle wall three times."]],
+indigenous:["adj","native to a place","本土的；原生的",["native","original","local"],["Ice hockey has roots in ___ stick-and-ball games.","The team's logo honors the region's ___ people.","The game's ___ creatures only live on one island."]],
+juxtapose:["v","to place side by side to compare","並列；對照",["place side by side","compare","contrast"],["The coach likes to ___ game film of a good shift and a bad one.","The video will ___ his old shot and his new one.","The trailer chose to ___ the first game and the sequel."]],
+malleable:["adj","easily shaped or changed","可塑的",["pliable","flexible","adaptable"],["A young player's skating style is still ___.","Young players' habits are ___, so coach them early.","The game's ___ terrain can be shaped into anything."]],
+obsequious:["adj","too eager to please or obey","奉承的",["fawning","servile","flattering"],["The ___ rookie agreed with everything the captain said.","The ___ player laughed at all the coach's jokes.","The ___ NPC bows every time you walk past."]],
+paucity:["n","a small amount; a lack","缺乏",["scarcity","shortage","dearth"],["A ___ of goalies meant the coach had to play in net.","A ___ of tall players hurt the team's rebounding.","The ___ of save points makes this level brutal."]],
+recalcitrant:["adj","stubbornly refusing to obey","頑抗的",["defiant","stubborn","unruly"],["The ___ defenseman ignored the coach's line changes.","The ___ player refused to run the set play.","The ___ villager won't trade no matter what you offer."]],
+spurious:["adj","false or fake","虛假的",["false","fake","bogus"],["The ___ claim that the goal was offside was disproved by replay.","The ___ rumor said the star was transferring.","The ___ 'free skins' link was a scam."]],
+subservient:["adj","too willing to obey others","卑躬屈膝的",["submissive","obedient","servile"],["A captain shouldn't be ___ to the loudest player.","The ___ assistant never questioned the coach.","The ___ minion follows the villain's every order."]],
+tacit:["adj","understood without being said","心照不宣的",["unspoken","implied","understood"],["The linemates had a ___ agreement about who takes faceoffs.","The ___ rule is that the senior shoots the last free throw.","Our squad had a ___ plan: nobody touches the boss until the healer is ready."]],
+truculent:["adj","eager to argue or fight","好鬥的",["aggressive","combative","hostile"],["The ___ defenseman picked a fight after every whistle.","The ___ center shoved anyone near the rim.","The ___ player trash-talked everyone in the lobby."]],
+zenith:["n","the highest point","巔峰",["peak","summit","apex"],["Winning the state title was the ___ of her hockey career.","His fifty-point game was the ___ of his season.","Reaching the top rank was the ___ of her gaming year."]],
+scathing:["adj","harshly critical","尖酸刻薄的",["harsh","severe","biting"],["The coach gave a ___ review of the team's defense.","The newspaper's ___ article blamed the point guard.","The game got ___ reviews for its bugs."]],
+rigor:["n","strictness and careful thoroughness","嚴謹",["thoroughness","strictness","precision"],["The ___ of the training camp surprised the rookies.","The coach studies film with real ___.","Speedrunners plan routes with incredible ___."]],
+diverse:["adj","showing a lot of variety","多元的",["varied","assorted","mixed"],["The team has a ___ roster from six countries.","A ___ offense uses shooters, drivers, and post players.","The game offers a ___ set of characters."]],
+introverted:["adj","quiet and preferring to be alone","內向的",["reserved","shy","withdrawn"],["The ___ goalie recharges by sitting alone before games.","The ___ guard lets her play do the talking.","The ___ gamer prefers solo mode."]],
+stalemate:["n","a situation where neither side can win","僵局",["deadlock","standstill","draw"],["Two scoreless overtimes ended in a ___.","The game was a ___ until the final minute.","The match ended in a ___ when both players ran out of moves."]],
+measured:["adj","slow, careful, and controlled","慎重的；從容的",["careful","controlled","deliberate"],["The captain spoke in a ___ voice after the loss.","The point guard sets a ___ pace to slow the game down.","A ___ approach beats rushing in on the boss."]],
+flawless:["adj","perfect; with no mistakes","完美無瑕的",["perfect","impeccable","faultless"],["The goalie's ___ game ended in a shutout.","Her ___ shooting night was ten for ten.","He finished a ___ run with zero deaths."]],
+mediocre:["adj","only average; not very good","平庸的",["average","ordinary","so-so"],["The team had a ___ season: half wins, half losses.","His ___ free-throw shooting cost them close games.","The sequel was ___ compared to the original."]],
+ridicule:["v","to make fun of","嘲笑",["mock","deride","tease"],["Never ___ a teammate for falling on the ice.","Don't ___ the kid who air-balled.","Don't ___ new players in the chat."]],
+comprehensive:["adj","complete; including everything","全面的",["complete","thorough","full"],["The scouting report gives a ___ view of every opponent.","The coach made a ___ list of every play.","The wiki is a ___ guide to every level."]],
+coherent:["adj","logical and clearly connected","條理清晰的",["logical","clear","consistent"],["The coach gave a ___ plan the whole team understood.","Her ___ explanation of the zone defense made sense.","The game's story is ___ from start to finish."]],
+disjointed:["adj","not well connected; broken up","不連貫的",["disconnected","jumbled","choppy"],["The ___ power play never set up a good shot.","The ___ offense had no flow.","The ___ plot jumps around with no explanation."]],
+altruism:["n","unselfish care for others","利他主義；無私",["selflessness","generosity","kindness"],["Blocking a shot to protect your goalie is pure ___.","Passing up a shot for a teammate shows ___.","Sharing rare loot with beginners is ___."]],
+arid:["adj","very dry, with little rain","乾旱的",["dry","parched","barren"],["Outdoor hockey is impossible in an ___ desert town.","The ___ heat made the outdoor court feel like an oven.","The ___ desert map has no water anywhere."]],
+fertile:["adj","able to produce a lot","肥沃的；多產的",["productive","rich","fruitful"],["The local youth league is ___ ground for future stars.","Her ___ imagination invents new plays every week.","The ___ farmland in the game grows crops twice as fast."]],
+populous:["adj","having many people","人口稠密的",["crowded","densely populated","teeming"],["The most ___ cities usually have the most rinks.","The ___ city has a basketball court on every block.","The ___ server has a thousand players online."]],
+conclusive:["adj","proving something beyond doubt","確鑿的",["decisive","definite","convincing"],["The replay was ___: the puck crossed the line.","The video gave ___ proof that it was a foul.","The screenshot was ___ evidence of cheating."]],
+compelling:["adj","very interesting or convincing","引人入勝的；令人信服的",["convincing","gripping","persuasive"],["The comeback story was ___ enough to become a movie.","The coach made a ___ case for starting the rookie.","The game's ___ story kept me playing all night."]],
+caustic:["adj","bitter and sarcastic","尖酸的",["biting","sarcastic","harsh"],["The coach's ___ comments made the rookie cry.","The announcer's ___ remark about the ref went viral.","His ___ messages in chat got him muted."]],
+gracious:["adj","kind and polite","親切有禮的",["courteous","kind","polite"],["The ___ winners shook every opponent's hand.","She was ___ in defeat, congratulating the other team.","The ___ winner said 'good game' to everyone."]],
+lush:["adj","growing thickly and richly","茂盛的",["green","thick","abundant"],["The outdoor rink sits beside a ___ park.","The court is surrounded by ___ trees.","The ___ jungle level is full of vines."]],
+engaging:["adj","interesting and attractive","吸引人的",["interesting","charming","captivating"],["The coach's ___ drills made practice fun.","The ___ announcer kept fans entertained.","The game's ___ puzzles kept everyone hooked."]],
+contradict:["v","to say the opposite of","與…矛盾；反駁",["deny","oppose","dispute"],["The replay seemed to ___ the referee's call.","The stats ___ the idea that he can't shoot.","The new update seems to ___ the old lore."]],
+condense:["v","to make shorter or more compact","濃縮",["shorten","compress","summarize"],["The coach had to ___ the game plan into three rules.","The video team will ___ the game into a two-minute highlight.","The guide tries to ___ the whole game into one page."]],
+ruthless:["adj","having no pity","無情的",["merciless","cruel","heartless"],["The ___ team kept scoring even after leading 8–0.","The ___ press forced turnover after turnover.","The ___ boss gives no second chances."]],
+alarmist:["adj","exaggerating danger to cause worry","危言聳聽的",["fearmongering","exaggerating","panicky"],["The ___ headline said the season was ruined after one loss.","Fans called the ___ report about the star's injury overblown.","The ___ post claimed the game would shut down."]],
+effortless:["adj","seeming to need no effort","毫不費力的",["easy","smooth","natural"],["Her ___ skating hides years of practice.","His ___ jump shot looks simple but isn't.","The pro made the hardest level look ___."]],
+explicit:["adj","stated clearly and directly","明確的",["clear","direct","specific"],["The coach gave ___ instructions: shoot low.","The ___ rule says no hanging on the rim.","The quest gives ___ directions to the cave."]],
+congested:["adj","overcrowded","擁擠的；堵塞的",["crowded","jammed","packed"],["The ___ crease left the goalie no room to see.","The ___ paint made driving to the rim impossible.","The ___ server lagged all night."]],
+renovate:["v","to repair and improve","翻新",["restore","repair","refurbish"],["The city plans to ___ the old rink.","They will ___ the gym over the summer.","Players can ___ the broken castle in the game."]],
+anonymous:["adj","with no name known","匿名的",["unnamed","unknown","nameless"],["An ___ donor paid for new goalie gear.","An ___ fan sent the team pizza.","The ___ player at the top of the leaderboard is a mystery."]],
+domineering:["adj","trying to control others","專橫的",["bossy","controlling","overbearing"],["The ___ captain told everyone where to skate.","The ___ guard never let anyone else run the offense.","The ___ guild leader made every decision alone."]],
+compromise:["n","an agreement where each side gives up something","妥協",["agreement","settlement","middle ground"],["The two captains reached a ___ on the line combinations.","The ___ was that both guards would share the ball.","The two clans reached a ___ about the border."]],
+acknowledge:["v","to admit or recognize","承認",["admit","recognize","accept"],["The goalie had to ___ the shot was perfect.","She had to ___ the other team was faster.","He had to ___ that his strategy failed."]],
+reassure:["v","to make someone feel less worried","使安心",["comfort","encourage","calm"],["The coach tried to ___ the goalie after the bad goal.","The captain tried to ___ the nervous rookie.","The guide tried to ___ new players that the boss is beatable."]],
+};
+const TEACHER2=["ameliorate","belligerent","candor","capricious","complacent","corroborate","dearth","disparage","exacerbate","garrulous","hackneyed","impetuous","insipid","lethargic","magnanimous","nonchalant","ostentatious","placate","precocious","prolific","resilient","vacillate","vindicate","wary","exuberant","refute","ambiguous","tactful","vigilant","meager","hasty","dubious","unanimous","arbitrary","alleviate","conceal","tentative","barren","desolate","tedious","grueling","provoke"].concat(Object.keys(T2RAW));
+const UPPER2=Object.keys(T2RAW).map(k=>{const r=T2RAW[k];return[k,r[0],r[1],r[2],r[3],r[4][0]]});
+const SENT6={};Object.keys(T2RAW).forEach(k=>{SENT6[k]=T2RAW[k][4]});
+Object.assign(FORMS,{diffident:[["diffidence","shyness; lack of self-confidence"]],erudite:[["erudition","great knowledge from study"]],fastidious:[["fastidiously","in a very careful, fussy way"]],coherent:[["coherence","the quality of being logical and clear"]],ridicule:[["ridiculous","so silly it deserves to be laughed at"]],diverse:[["diversity","variety"]],tacit:[["tacitly","without saying it directly"]],flawless:[["flawlessly","perfectly; without any mistake"]],explicit:[["explicitly","clearly and directly"]]});
+
+const WORDS=MID.concat(MID2,UPPER,UPPER2);
+const TSET=new Set(TEACHER2.map(w=>WORDS.findIndex(x=>x[0]===w)).filter(i=>i>=0));
 const SENT1 = {
 abate:["The booing began to ___ once the home team scored.","The noise in the gym did not ___ until the final buzzer.","The storm effect will ___ after you defeat the weather boss."],
 abhor:["Goalies ___ letting in a goal from center ice.","Coaches ___ lazy passes in the fourth quarter.","Most players ___ levels with no checkpoints."],
@@ -1179,7 +1239,16 @@ withdraw:["He had to ___ from the tournament with the flu.","She had to ___ from
 yearn:["Fans ___ for another title.","Players ___ for a chance to start.","Players ___ for a sequel."],
 };
 
-const SENT=Object.assign({},SENT1,SENT2,SENT3,SENT4,SENT5);const THEMES=[["hockey","🏒 Hockey"],["basketball","🏀 Basketball"],["games","🎮 Games"],["mix","🔀 Mix"]];
+const SENT=Object.assign({},SENT1,SENT2,SENT3,SENT4,SENT5,SENT6);const THEMES=[["hockey","🏒 Hockey"],["basketball","🏀 Basketball"],["games","🎮 Games"],["mix","🔀 Mix"]];
+const AUDIO_BASE="audio/";let curAudio=null,voiceCache=null;
+function sentKey(i,t){const s=SENT[WORDS[i][0]];const k=s?s.indexOf(t):-1;return k>=0?WORDS[i][0]+"-"+k:null}
+function pickVoice(){if(voiceCache)return voiceCache;try{const vs=speechSynthesis.getVoices().filter(v=>/^en[-_]US/i.test(v.lang));const pref=["Ava","Samantha","Aria","Jenny","Zira","Google US English","Natural","Enhanced","Premium"];for(const p of pref){const v=vs.find(v=>v.name.includes(p));if(v){voiceCache=v;return v}}voiceCache=vs[0]||null;return voiceCache}catch(e){return null}}
+function speak(text,key,rate){if(!text)return;if(curAudio){curAudio.pause();curAudio=null}try{speechSynthesis.cancel()}catch(e){}
+  const fb=()=>{try{const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||0.92;const v=pickVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}};
+  if(!key){fb();return}const a=new Audio(AUDIO_BASE+encodeURIComponent(key)+".mp3");a.onerror=fb;curAudio=a;a.play().catch(fb)}
+function spk(text,key,big){return `<button class="spk${big?" big":""}" data-say="${esc(text)}" data-key="${esc(key||"")}" aria-label="Play audio">🔊</button>`}
+document.addEventListener("click",e=>{const b=e.target.closest(".spk");if(b){e.preventDefault();speak(b.dataset.say,b.dataset.key||null)}});
+if("speechSynthesis" in window){speechSynthesis.onvoiceschanged=()=>{voiceCache=null}}
 function sentOf(i){const s=SENT[WORDS[i][0]];if(!s)return WORDS[i][5];const t=S.theme||"mix";const k=t==="hockey"?0:t==="basketball"?1:t==="games"?2:Math.floor(Math.random()*3);return s[k]}const MIDN=MID.length+MID2.length;const lvlOf=i=>i<MIDN?"Middle":"Upper";
 // ---------- spaced repetition ----------
 // Leitner boxes with expanding intervals (Ebbinghaus review-before-forgetting):
@@ -1200,7 +1269,7 @@ const BADGES=[
 ];
 const KEY="wordrink-v1";
 const todayKey=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const fresh=()=>({v:1,name:"",exam:"2027-01-09",perDay:8,zh:true,xp:0,streak:0,best:0,last:"",freezeUsed:"",badges:[],w:{},hist:{},intro:[],updated:0,reportUrl:"",pending:false,theme:"mix"});
+const fresh=()=>({v:1,name:"",exam:"2027-01-09",perDay:8,zh:true,xp:0,streak:0,best:0,last:"",freezeUsed:"",badges:[],w:{},hist:{},intro:[],updated:0,reportUrl:"",pending:false,theme:"mix",autoSay:true});
 let S=fresh();
 function load(){try{const j=localStorage.getItem(KEY);if(j)S=Object.assign(fresh(),JSON.parse(j))}catch(e){}}
 let dbRef=null,dbUserId=null,saveTimer=null;
@@ -1209,6 +1278,7 @@ function save(){S.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify
 async function cloudSave(){if(!dbRef)return;try{await dbRef.set(S);await summaryRef.set(summary())}catch(e){}}
 let summaryRef=null;
 function summary(){const m=masteredCount(),seen=S.intro.length;return{name:S.name,xp:S.xp,streak:S.streak,mastered:m,seen:seen,total:WORDS.length,due:dueList().length,last:S.last,updated:Date.now()}}
+function audioKeys(){const ks=[];WORDS.forEach(w=>{ks.push(w[0]);const s=SENT[w[0]];if(s)s.forEach((_,k)=>ks.push(w[0]+"-"+k));const f=FORMS[w[0]];if(f)f.forEach(x=>ks.push(x[0]))});return ks}
 function report(){if(!S.reportUrl)return;const t=todayKey();const h=S.hist[t]||{q:0,ok:0,nw:0,xp:0};
   const weak=Object.keys(S.w).filter(i=>S.w[i].b<=1&&S.w[i].l>0).sort((a,b)=>S.w[b].l-S.w[a].l).slice(0,15).map(i=>WORDS[i][0]+"("+S.w[i].l+")").join(", ");
   const body=JSON.stringify(Object.assign(summary(),{date:t,todayQ:h.q,todayAcc:h.q?Math.round(h.ok/h.q*100):"",todayNew:h.nw,todayXP:h.xp,weak,backup:btoa(unescape(encodeURIComponent(JSON.stringify(S))))}));
@@ -1224,7 +1294,7 @@ async function cloudInit(){try{if(!window.claude||!claude.use)return;const [db,u
 const ws=i=>S.w[i]||{b:0,d:0,l:0,c:0};
 function dueList(){const now=Date.now();return Object.keys(S.w).map(Number).filter(i=>S.w[i].b>0&&S.w[i].b<6&&S.w[i].d<=now)}
 function masteredCount(){return Object.values(S.w).filter(x=>x.b>=4).length}
-function unseen(){return WORDS.map((_,i)=>i).filter(i=>!S.w[i]||S.w[i].b===0)}
+function unseen(){const rk=i=>i<MIDN?0:TSET.has(i)?1:2;return WORDS.map((_,i)=>i).filter(i=>!S.w[i]||S.w[i].b===0).sort((a,b)=>rk(a)-rk(b)||a-b)}
 function daysToExam(){const e=new Date(S.exam+"T00:00:00");return Math.ceil((e-new Date())/DAY)}
 function level(){let L=LEVELS[0],next=null;for(let i=0;i<LEVELS.length;i++){if(S.xp>=LEVELS[i][0]){L=LEVELS[i];next=LEVELS[i+1]||null}}return{L,next}}
 function addXP(n){S.xp+=n;const p=document.createElement("div");p.className="xp-pop";p.textContent="+"+n+" XP";document.body.appendChild(p);setTimeout(()=>p.remove(),1000);checkBadges();updateBoard()}
@@ -1296,15 +1366,15 @@ function session(dueIdx,nNew){const newIdx=unseen().slice(0,nNew);
   const total=items.length;
   const step=()=>{if(k>=total)return finish();const it=items[k];const pct=Math.round(k/total*100);
     if(it.kind==="learn"){const w=WORDS[it.i];if(!S.intro.includes(it.i)){S.intro.push(it.i);S.w[it.i]={b:1,d:Date.now()+DAY,l:0,c:0};logHist("nw",1)}
-      main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">New word ${newIdx.indexOf(it.i)+1} of ${newIdx.length}</p>
-      <div class="wcard"><div><span class="word">${esc(w[0])}</span><span class="pos">${w[1]==="n"?"noun":w[1]==="v"?"verb":"adjective"}</span></div><p class="kb" style="margin:4px 0 0">${lvlOf(it.i)} Level</p>
+      const ls=sentOf(it.i),lf=ls.replace("___",w[0]);main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">New word ${newIdx.indexOf(it.i)+1} of ${newIdx.length}</p>
+      <div class="wcard"><div><span class="word">${esc(w[0])}</span>${spk(w[0],w[0],true)}<span class="pos">${w[1]==="n"?"noun":w[1]==="v"?"verb":"adjective"}</span></div><p class="kb" style="margin:4px 0 0">${lvlOf(it.i)} Level</p>
       <p style="font-size:20px;margin-top:10px">${esc(w[2])}</p>${S.zh?`<p class="zh">${esc(w[3])}</p>`:""}
       <p class="muted" style="margin-top:8px">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p>
-      <p class="sent">${esc(sentOf(it.i)).replace("___","<b>"+esc(w[0])+"</b>")}</p></div>
+      <p class="sent">${esc(ls).replace("___","<b>"+esc(w[0])+"</b>")}${spk(lf,sentKey(it.i,ls))}</p></div>
       <p class="kb">Say it out loud once, then picture the sentence. That is the fastest way to make it stick.</p>
-      <button class="btn" style="margin-top:12px" id="nx">Got it</button>`;$("#nx").onclick=()=>{k++;addXP(5);step()};return}
+      <button class="btn" style="margin-top:12px" id="nx">Got it</button>`;$("#nx").onclick=()=>{k++;addXP(5);step()};if(S.autoSay)setTimeout(()=>speak(w[0],w[0]),250);return}
     const Q=makeQ(it.i);q++;const w=WORDS[it.i];const sen=Q.type==="sent"?Q.prompt:sentOf(it.i);
-    const head=Q.type==="form"?`<p class="muted">A different form of a word you know. What does it mean?</p><div class="word">${esc(Q.prompt)}</div>`:Q.type==="syn"?`<p class="muted">Which word is closest in meaning to</p><div class="word">${esc(Q.prompt)}</div>`:Q.type==="def"?`<p class="muted">What does this word mean?</p><div class="word">${esc(Q.prompt)}</div>`:`<p class="muted">Fill in the blank</p><p class="sent">${esc(Q.prompt).replace("___","<b>______</b>")}</p>`;
+    const head=Q.type==="form"?`<p class="muted">A different form of a word you know. What does it mean?</p><div class="word">${esc(Q.prompt)}${spk(Q.prompt,Q.prompt,true)}</div>`:Q.type==="syn"?`<p class="muted">Which word is closest in meaning to</p><div class="word">${esc(Q.prompt)}${spk(Q.prompt,Q.prompt,true)}</div>`:Q.type==="def"?`<p class="muted">What does this word mean?</p><div class="word">${esc(Q.prompt)}${spk(Q.prompt,Q.prompt,true)}</div>`:`<p class="muted">Fill in the blank</p><p class="sent">${esc(Q.prompt).replace("___","<b>______</b>")}</p>`;
     main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">${it.isNew?"New word check":"Review"} · ${k+1}/${total} ${combo>=3?`· 🔥 ${combo} combo`:""}</p>
     <div class="wcard">${head}</div><div class="opts">${Q.opts.map((o,n)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[n]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="fb"></div>`;
     document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const pick=b.dataset.o;const right=pick===Q.ans;document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(x.dataset.o===Q.ans)x.classList.add("ok");else if(x===b&&!right)x.classList.add("bad")});
@@ -1312,7 +1382,7 @@ function session(dueIdx,nNew){const newIdx=unseen().slice(0,nNew);
       if(!it.isNew)logHist("rev",1);logHist("q",1);
       let gain;if(right){ok++;combo++;gain=10+(combo>=3?5:0)+(combo>=6?5:0);logHist("ok",1)}else{combo=0;gain=2;wrongs.push(it.i)}
       addXP(gain);logHist("xp",gain);
-      $("#fb").innerHTML=`<div class="fb ${right?"":"bad"}"><b>${right?"Right.":"Not quite."}</b> ${Q.type==="form"?`<b>${esc(Q.prompt)}</b> = ${esc(Q.ans)} · from <b>${esc(w[0])}</b> = ${esc(w[2])}`:`<b>${esc(w[0])}</b> = ${esc(w[2])}`}${S.zh?` <span class="zh">(${esc(w[3])})</span>`:""}<br><span class="muted">${esc(sen).replace("___",w[0])}</span></div><button class="btn" style="margin-top:10px" id="nx">${right?"Next":"OK, next"}</button>`;
+      $("#fb").innerHTML=`<div class="fb ${right?"":"bad"}"><b>${right?"Right.":"Not quite."}</b> ${Q.type==="form"?`<b>${esc(Q.prompt)}</b> = ${esc(Q.ans)} · from <b>${esc(w[0])}</b> = ${esc(w[2])}`:`<b>${esc(w[0])}</b> = ${esc(w[2])}`}${S.zh?` <span class="zh">(${esc(w[3])})</span>`:""}${Q.type==="sent"?spk(w[0],w[0]):""}<br><span class="muted">${esc(sen).replace("___",w[0])}</span>${spk(sen.replace("___",w[0]),sentKey(it.i,sen))}</div><button class="btn" style="margin-top:10px" id="nx">${right?"Next":"OK, next"}</button>`;
       $("#nx").onclick=()=>{k++;step()};$("#nx").focus();save()});
   };
   const finish=()=>{touchStreak();if(!S.badges.includes("first"))S.badges.push("first");if(q>=10&&ok===q&&!S.badges.includes("perfect")){S.badges.push("perfect")}checkBadges();save();report();
@@ -1339,15 +1409,15 @@ function shootout(){const pool=shuffle(S.intro.slice());if(pool.length<8)return;
 
 // ---------- words ----------
 let wFilter="all",wSearch="",wLvl="all";
-function rWords(){const now=Date.now();const list=WORDS.map((w,i)=>({w,i,s:ws(i)})).filter(x=>{if(wSearch&&!(x.w[0].includes(wSearch)||x.w[3].includes(wSearch)))return false;if(wLvl==="M"&&x.i>=MIDN)return false;if(wLvl==="U"&&x.i<MIDN)return false;
+function rWords(){const now=Date.now();const list=WORDS.map((w,i)=>({w,i,s:ws(i)})).filter(x=>{if(wSearch&&!(x.w[0].includes(wSearch)||x.w[3].includes(wSearch)))return false;if(wLvl==="M"&&x.i>=MIDN)return false;if(wLvl==="U"&&x.i<MIDN)return false;if(wLvl==="T"&&!TSET.has(x.i))return false;
   if(wFilter==="due")return x.s.b>0&&x.s.d<=now;if(wFilter==="learning")return x.s.b>0&&x.s.b<4;if(wFilter==="mastered")return x.s.b>=4;if(wFilter==="new")return x.s.b===0;return true});
   main.innerHTML=`<h1>Word list</h1><input id="srch" placeholder="Search English or 中文" value="${esc(wSearch)}">
   <div class="chips">${[["all","All"],["due","Due"],["learning","Learning"],["mastered","Mastered"],["new","Not yet seen"]].map(f=>`<button class="chip ${wFilter===f[0]?"on":""}" data-f="${f[0]}">${f[1]}</button>`).join("")}</div>
-  <div class="chips">${[["all","Both decks"],["M","Middle Level"],["U","Upper Level"]].map(f=>`<button class="chip lv ${wLvl===f[0]?"on":""}" data-l="${f[0]}">${f[1]}</button>`).join("")}</div><p class="muted">${list.length} words</p>
+  <div class="chips">${[["all","Both decks"],["M","Middle Level"],["U","Upper Level"],["T","Teacher list"]].map(f=>`<button class="chip lv ${wLvl===f[0]?"on":""}" data-l="${f[0]}">${f[1]}</button>`).join("")}</div><p class="muted">${list.length} words</p>
   ${list.map(x=>`<button class="wl" data-i="${x.i}"><span><b>${esc(x.w[0])}</b> <span class="muted" style="font-size:14px">${esc(x.w[4][0])}</span></span><span class="pill ${x.s.b>0&&x.s.d<=now?"due":"b"+x.s.b}">${x.s.b===0?"new":x.s.b>=4?"mastered":x.s.d<=now?"due":"box "+x.s.b}</span></button>`).join("")}`;
   $("#srch").oninput=e=>{wSearch=e.target.value.toLowerCase();rWords()};document.querySelectorAll(".chip:not(.lv)").forEach(c=>c.onclick=()=>{wFilter=c.dataset.f;rWords()});document.querySelectorAll(".chip.lv").forEach(c=>c.onclick=()=>{wLvl=c.dataset.l;rWords()});
   document.querySelectorAll(".wl").forEach(b=>b.onclick=()=>showWord(+b.dataset.i))}
-function showWord(i){const w=WORDS[i],s=ws(i);$("#modal").classList.remove("hidden");$("#modal").innerHTML=`<div><div><span class="word">${esc(w[0])}</span><span class="pos">${w[1]}</span> <span class="pill">${lvlOf(i)}</span></div><p style="font-size:19px">${esc(w[2])}</p><p class="zh">${esc(w[3])}</p><p class="muted">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p><p class="sent">${esc(sentOf(i)).replace("___","<b>"+esc(w[0])+"</b>")}</p>
+function showWord(i){const w=WORDS[i],s=ws(i);$("#modal").classList.remove("hidden");const ms=sentOf(i);$("#modal").innerHTML=`<div><div><span class="word">${esc(w[0])}</span>${spk(w[0],w[0],true)}<span class="pos">${w[1]}</span> <span class="pill">${lvlOf(i)}</span></div><p style="font-size:19px">${esc(w[2])}</p><p class="zh">${esc(w[3])}</p><p class="muted">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p><p class="sent">${esc(ms).replace("___","<b>"+esc(w[0])+"</b>")}${spk(ms.replace("___",w[0]),sentKey(i,ms))}</p>
   <p class="kb">${s.b===0?"Not introduced yet.":`Box ${s.b} · ${s.c} correct · ${s.l} misses · next review ${s.d<=Date.now()?"now":new Date(s.d).toLocaleDateString()}`}</p><button class="btn ghost" id="cl">Close</button></div>`;$("#cl").onclick=()=>$("#modal").classList.add("hidden")}
 
 // ---------- plan ----------
@@ -1383,16 +1453,19 @@ function rSettings(){const pc=pace();
   <label class="f">Player name</label><input id="nm" value="${esc(S.name)}">
   <label class="f">Exam date</label><input id="ex" type="date" value="${S.exam}">
   <label class="f">New words per day (recommended now: ${pc.rec})</label><input id="pd" type="number" min="3" max="15" value="${S.perDay}">
-  <div class="tog" style="margin-top:14px"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
+  <div class="tog" style="margin-top:14px"><span>Auto-play word audio on new-word cards</span><button class="sw ${S.autoSay?"on":""}" id="as" aria-label="Toggle auto-play"></button></div>
+  <div class="tog"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
   <button class="btn" style="margin-top:16px" id="sv">Save setup</button>
   <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. Parents: the Stats tab is the report card.</div>
+  <div class="blueline"><h3>Voice</h3><p class="muted" style="font-size:14px">Tap 🔊 anywhere to hear a word or sentence. Natural voice clips play from the site’s audio pack; if a clip is missing, the device voice is used.</p><button class="btn ghost sm" id="dl">Download audio pack for offline</button></div>
   <div class="blueline"><h3>Parent report</h3><p class="muted" style="font-size:14px">Paste the Google Apps Script web-app URL here. After every session the app sends a one-line summary (and a backup) to that spreadsheet.</p><input id="ru" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(S.reportUrl||"")}"><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rt">Send a test report</button></div></div>
   <div class="blueline"><h3>Backup</h3><p class="muted" style="font-size:14px">Copy this code to move progress to another device, or paste a code to restore.</p><div class="row"><button class="btn ghost sm" id="exp">Export progress</button><button class="btn ghost sm" id="imp">Import progress</button></div><textarea id="bk" style="width:100%;height:80px;margin-top:8px;font:13px monospace;border:2px solid var(--line);border-radius:8px;background:var(--ice2);color:var(--ink)" placeholder="Progress code appears here / paste a code here"></textarea></div>
   <div class="rink"><button class="btn ghost" id="rs">Reset all progress</button></div>`;
   $("#exp").onclick=()=>{$("#bk").value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$("#bk").select();try{navigator.clipboard.writeText($("#bk").value);toast("Copied")}catch(e){}};
   $("#imp").onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($("#bk").value.trim()))));if(!o.w)throw 0;if(confirm("Replace current progress with this code?")){S=Object.assign(fresh(),o);save();toast("Imported");tab="today";render()}}catch(e){alert("That code is not valid.")}};
   $("#rt").onclick=()=>{S.reportUrl=$("#ru").value.trim();save();if(!S.reportUrl){alert("Paste a URL first.");return}report();toast("Sent — check the sheet")};
-  $("#zh").onclick=()=>{S.zh=!S.zh;$("#zh").classList.toggle("on",S.zh)};
+  $("#zh").onclick=()=>{S.zh=!S.zh;$("#zh").classList.toggle("on",S.zh)};$("#as").onclick=()=>{S.autoSay=!S.autoSay;$("#as").classList.toggle("on",S.autoSay);save()};
+  $("#dl").onclick=async()=>{const keys=audioKeys();const b=$("#dl");b.disabled=true;let ok=0,miss=0;for(let i=0;i<keys.length;i+=6){await Promise.all(keys.slice(i,i+6).map(k=>fetch(AUDIO_BASE+encodeURIComponent(k)+".mp3").then(r=>{r.ok?ok++:miss++}).catch(()=>miss++)));b.textContent=`Downloading… ${ok+miss}/${keys.length}`}b.textContent=miss>keys.length/2?"No audio pack found on this site":`Audio saved for offline (${ok} clips)`};
   $("#sv").onclick=()=>{S.reportUrl=$("#ru").value.trim();S.name=$("#nm").value.trim();S.exam=$("#ex").value||S.exam;S.perDay=Math.max(3,Math.min(15,+$("#pd").value||8));save();toast("Saved");tab="today";render()};
   $("#rs").onclick=()=>{if(confirm("Reset everything? This cannot be undone."))  {const nm=S.name,ex=S.exam;S=fresh();S.name=nm;S.exam=ex;save();render()}}}
 
