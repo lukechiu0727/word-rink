@@ -1456,7 +1456,7 @@ function rSettings(){const pc=pace();
   <div class="tog" style="margin-top:14px"><span>Auto-play word audio on new-word cards</span><button class="sw ${S.autoSay?"on":""}" id="as" aria-label="Toggle auto-play"></button></div>
   <div class="tog"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
   <button class="btn" style="margin-top:16px" id="sv">Save setup</button>
-  <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. Parents: the Stats tab is the report card.</div>
+  <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. App version 2026-10-19a. Parents: the Stats tab is the report card.</div>
   <div class="blueline"><h3>Voice</h3><p class="muted" style="font-size:14px">Tap 🔊 anywhere to hear a word or sentence. Natural voice clips play from the site’s audio pack; if a clip is missing, the device voice is used.</p><button class="btn ghost sm" id="dl">Download audio pack for offline</button></div>
   <div class="blueline"><h3>Parent report</h3><p class="muted" style="font-size:14px">Paste the Google Apps Script web-app URL here. After every session the app sends a one-line summary (and a backup) to that spreadsheet.</p><input id="ru" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(S.reportUrl||"")}"><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rt">Send a test report</button></div></div>
   <div class="blueline"><h3>Backup</h3><p class="muted" style="font-size:14px">Copy this code to move progress to another device, or paste a code to restore.</p><div class="row"><button class="btn ghost sm" id="exp">Export progress</button><button class="btn ghost sm" id="imp">Import progress</button></div><textarea id="bk" style="width:100%;height:80px;margin-top:8px;font:13px monospace;border:2px solid var(--line);border-radius:8px;background:var(--ice2);color:var(--ink)" placeholder="Progress code appears here / paste a code here"></textarea></div>
@@ -1474,7 +1474,7 @@ load();render();if(S.pending&&navigator.onLine)report();
 if(!S.name){$("#modal").classList.remove("hidden");$("#modal").innerHTML=`<div><h2>Welcome to Word Rink</h2><p class="muted">ISEE vocabulary training — ${WORDS.length} words (Middle Level foundation first, then Upper Level), scheduled so you review each one right before you’d forget it.</p><label class="f">Your name</label><input id="n0" placeholder="e.g. Luke"><label class="f">Exam date</label><input id="e0" type="date" value="${S.exam}"><button class="btn" style="margin-top:14px" id="go">Hit the ice</button></div>`;
   $("#go").onclick=()=>{S.name=$("#n0").value.trim()||"Player";S.exam=$("#e0").value||S.exam;save();$("#modal").classList.add("hidden");render()}}
 cloudInit();
-if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")r.update().catch(()=>{})})}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded||document.querySelector(".opt"))return;reloaded=true;location.reload()})}
 </script>
 </body>
 </html>
