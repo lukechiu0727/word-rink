@@ -1279,9 +1279,34 @@ async function cloudSave(){if(!dbRef)return;try{await dbRef.set(S);await summary
 let summaryRef=null;
 function summary(){const m=masteredCount(),seen=S.intro.length;return{name:S.name,xp:S.xp,streak:S.streak,mastered:m,seen:seen,total:WORDS.length,due:dueList().length,last:S.last,updated:Date.now()}}
 function audioKeys(){const ks=[];WORDS.forEach(w=>{ks.push(w[0]);const s=SENT[w[0]];if(s)s.forEach((_,k)=>ks.push(w[0]+"-"+k));const f=FORMS[w[0]];if(f)f.forEach(x=>ks.push(x[0]))});return ks}
+const APPID="wordrink";
+// ---------- compact backup + restore from sheet ----------
+const DAYMS=86400000;
+const _T=(en,zh)=>(typeof L==="function"?L(en,zh):en);
+function packState(s){const o=Object.assign({},s);delete o.w;delete o.intro;delete o.pending;
+  const cut=Date.now()-30*DAYMS,h={};Object.keys(s.hist||{}).forEach(k=>{if(new Date(k+"T00:00:00").getTime()>=cut)h[k]=s.hist[k]});o.hist=h;
+  const keys=Object.keys(s.w||{});o.W=keys.map(k=>{const x=s.w[k];return[k,x.b||0,Math.floor((x.d||0)/DAYMS),x.l||0,x.c||0]});
+  o.ik=keys.length&&keys.every(k=>/^\d+$/.test(k))?"n":"s";o.app=APPID;
+  const enc=x=>"z1."+btoa(unescape(encodeURIComponent(JSON.stringify(x))));let str=enc(o);if(str.length>48000){o.hist={};str=enc(o)}return str}
+function unpackState(str){str=String(str||"").trim();
+  if(str.startsWith("z1.")){const o=JSON.parse(decodeURIComponent(escape(atob(str.slice(3)))));if(o.app&&o.app!==APPID)throw new Error("app");
+    const w={};(o.W||[]).forEach(r=>{w[r[0]]={b:r[1],d:r[2]*DAYMS,l:r[3],c:r[4],t:[]}});
+    o.intro=Object.keys(w).filter(k=>w[k].b>0).map(k=>o.ik==="n"?Number(k):k);delete o.W;delete o.ik;o.w=w;return o}
+  const o=JSON.parse(decodeURIComponent(escape(atob(str))));if(!o.w)throw new Error("format");return o}
+async function restoreFromSheet(){const url=(($("#ru")||{}).value||S.reportUrl||"").trim(),tk=(($("#tk")||{}).value||"").trim(),nm=(($("#nm")||{}).value||S.name||"").trim();
+  if(!url){alert(_T("Paste the sheet URL first.","請先貼上試算表網址。"));return}
+  if(!nm){alert(_T("Enter the name used in the reports first.","請先輸入報告裡使用的名字。"));return}
+  let j;try{const r=await fetch(url+(url.includes("?")?"&":"?")+"name="+encodeURIComponent(nm)+"&app="+APPID+(tk?"&token="+encodeURIComponent(tk):""));j=await r.json()}
+  catch(e){alert(_T("Couldn't read the sheet. Check the URL, and make sure the Apps Script was updated and redeployed as a new version.","無法讀取試算表。請確認網址正確，並確認 Apps Script 已更新並重新部署為新版本。"));return}
+  if(j.error==="denied"){alert(_T("The sheet password doesn't match.","試算表密碼不正確。"));return}
+  if(!j.found){alert(_T("No backup for "+nm+" in this app yet. Finish one session with the report turned on first.","這個 App 還沒有 "+nm+" 的備份。請先在開啟報告的狀態下完成一次練習。"));return}
+  let o;try{o=unpackState(j.backup)}catch(e){alert(_T("That backup belongs to a different app or is damaged.","這份備份屬於其他 App，或已損壞。"));return}
+  if(!confirm(_T(`Found a backup from ${j.received}: ${o.xp} XP, ${o.streak}-day streak. Replace the progress on this device?`,`找到 ${j.received} 的備份：${o.xp} XP、連續 ${o.streak} 天。要用它取代這台裝置上的進度嗎？`)))return;
+  S=Object.assign(fresh(),o);S.reportUrl=url;S.token=tk;S.name=S.name||nm;save();toast(_T("Restored","已還原"));tab="today";render()}
+
 function report(){if(!S.reportUrl)return;const t=todayKey();const h=S.hist[t]||{q:0,ok:0,nw:0,xp:0};
   const weak=Object.keys(S.w).filter(i=>S.w[i].b<=1&&S.w[i].l>0).sort((a,b)=>S.w[b].l-S.w[a].l).slice(0,15).map(i=>WORDS[i][0]+"("+S.w[i].l+")").join(", ");
-  const body=JSON.stringify(Object.assign(summary(),{date:t,todayQ:h.q,todayAcc:h.q?Math.round(h.ok/h.q*100):"",todayNew:h.nw,todayXP:h.xp,weak,backup:btoa(unescape(encodeURIComponent(JSON.stringify(S))))}));
+  const body=JSON.stringify(Object.assign(summary(),{app:APPID,token:S.token||"",date:t,todayQ:h.q,todayAcc:h.q?Math.round(h.ok/h.q*100):"",todayNew:h.nw,todayXP:h.xp,weak,backup:packState(S)}));
   S.pending=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
   fetch(S.reportUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body}).then(()=>{S.pending=false;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}).catch(()=>{})}
 async function cloudInit(){try{if(!window.claude||!claude.use)return;const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);if(!db||!user)return;const id=await user.id();if(!id)return;dbUserId=id;
@@ -1456,24 +1481,78 @@ function rSettings(){const pc=pace();
   <div class="tog" style="margin-top:14px"><span>Auto-play word audio on new-word cards</span><button class="sw ${S.autoSay?"on":""}" id="as" aria-label="Toggle auto-play"></button></div>
   <div class="tog"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
   <button class="btn" style="margin-top:16px" id="sv">Save setup</button>
-  <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. App version 2026-10-19a. Parents: the Stats tab is the report card.</div>
+  <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. App version 2026-11-21a. Parents: the Stats tab is the report card.</div>
   <div class="blueline"><h3>Voice</h3><p class="muted" style="font-size:14px">Tap 🔊 anywhere to hear a word or sentence. Natural voice clips play from the site’s audio pack; if a clip is missing, the device voice is used.</p><button class="btn ghost sm" id="dl">Download audio pack for offline</button></div>
-  <div class="blueline"><h3>Parent report</h3><p class="muted" style="font-size:14px">Paste the Google Apps Script web-app URL here. After every session the app sends a one-line summary (and a backup) to that spreadsheet.</p><input id="ru" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(S.reportUrl||"")}"><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rt">Send a test report</button></div></div>
+  <div class="blueline"><h3>Parent report</h3><p class="muted" style="font-size:14px">Paste the Google Apps Script web-app URL here. After every session the app sends a one-line summary (and a backup) to that spreadsheet.</p><input id="ru" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(S.reportUrl||"")}"><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rt">Send a test report</button><button class="btn ghost sm" id="rf">Restore from sheet</button><button class="btn ghost sm" id="sn">Sync now</button></div><p class="kb" style="margin-top:8px"><b>Sync across devices:</b> <span id="syncSt"></span></p><div></div><label class="f" style="font-size:14px">Sheet password (optional)</label><input id="tk" value="${esc(S.token||"")}" placeholder="Only if you set one in the Apps Script"></div>
   <div class="blueline"><h3>Backup</h3><p class="muted" style="font-size:14px">Copy this code to move progress to another device, or paste a code to restore.</p><div class="row"><button class="btn ghost sm" id="exp">Export progress</button><button class="btn ghost sm" id="imp">Import progress</button></div><textarea id="bk" style="width:100%;height:80px;margin-top:8px;font:13px monospace;border:2px solid var(--line);border-radius:8px;background:var(--ice2);color:var(--ink)" placeholder="Progress code appears here / paste a code here"></textarea></div>
   <div class="rink"><button class="btn ghost" id="rs">Reset all progress</button></div>`;
-  $("#exp").onclick=()=>{$("#bk").value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$("#bk").select();try{navigator.clipboard.writeText($("#bk").value);toast("Copied")}catch(e){}};
-  $("#imp").onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($("#bk").value.trim()))));if(!o.w)throw 0;if(confirm("Replace current progress with this code?")){S=Object.assign(fresh(),o);save();toast("Imported");tab="today";render()}}catch(e){alert("That code is not valid.")}};
-  $("#rt").onclick=()=>{S.reportUrl=$("#ru").value.trim();save();if(!S.reportUrl){alert("Paste a URL first.");return}report();toast("Sent — check the sheet")};
+  $("#rf").onclick=restoreFromSheet;$("#sn").onclick=()=>{const u=document.getElementById("ru"),t=document.getElementById("tk"),nmEl=document.getElementById("nm");if(u)S.reportUrl=u.value.trim();if(t)S.token=t.value.trim();if(nmEl&&nmEl.value.trim())S.name=nmEl.value.trim();save();syncNow(true,true)};showSync();
+  $("#exp").onclick=()=>{$("#bk").value=packState(S);$("#bk").select();try{navigator.clipboard.writeText($("#bk").value);toast("Copied")}catch(e){}};
+  $("#imp").onclick=()=>{try{const o=unpackState($("#bk").value);if(confirm("Replace current progress with this code?")){S=Object.assign(fresh(),o);save();toast("Imported");tab="today";render()}}catch(e){alert("That code is not valid.")}};
+  $("#rt").onclick=()=>{S.reportUrl=$("#ru").value.trim();S.token=$("#tk").value.trim();save();if(!S.reportUrl){alert("Paste a URL first.");return}report();toast("Sent — check the sheet")};
   $("#zh").onclick=()=>{S.zh=!S.zh;$("#zh").classList.toggle("on",S.zh)};$("#as").onclick=()=>{S.autoSay=!S.autoSay;$("#as").classList.toggle("on",S.autoSay);save()};
   $("#dl").onclick=async()=>{const keys=audioKeys();const b=$("#dl");b.disabled=true;let ok=0,miss=0;for(let i=0;i<keys.length;i+=6){await Promise.all(keys.slice(i,i+6).map(k=>fetch(AUDIO_BASE+encodeURIComponent(k)+".mp3").then(r=>{r.ok?ok++:miss++}).catch(()=>miss++)));b.textContent=`Downloading… ${ok+miss}/${keys.length}`}b.textContent=miss>keys.length/2?"No audio pack found on this site":`Audio saved for offline (${ok} clips)`};
-  $("#sv").onclick=()=>{S.reportUrl=$("#ru").value.trim();S.name=$("#nm").value.trim();S.exam=$("#ex").value||S.exam;S.perDay=Math.max(3,Math.min(15,+$("#pd").value||8));save();toast("Saved");tab="today";render()};
-  $("#rs").onclick=()=>{if(confirm("Reset everything? This cannot be undone."))  {const nm=S.name,ex=S.exam;S=fresh();S.name=nm;S.exam=ex;save();render()}}}
+  $("#sv").onclick=()=>{S.reportUrl=$("#ru").value.trim();S.token=$("#tk").value.trim();S.name=$("#nm").value.trim();S.exam=$("#ex").value||S.exam;S.perDay=Math.max(3,Math.min(15,+$("#pd").value||8));save();toast("Saved");tab="today";render()};
+  $("#rs").onclick=()=>{if(confirm("Reset everything? This cannot be undone."))  {const nm=S.name,ex=S.exam;S=fresh();S.name=nm;S.exam=ex;S.epoch=Date.now();save();render()}}}
 
 // ---------- boot ----------
 load();render();if(S.pending&&navigator.onLine)report();
 if(!S.name){$("#modal").classList.remove("hidden");$("#modal").innerHTML=`<div><h2>Welcome to Word Rink</h2><p class="muted">ISEE vocabulary training — ${WORDS.length} words (Middle Level foundation first, then Upper Level), scheduled so you review each one right before you’d forget it.</p><label class="f">Your name</label><input id="n0" placeholder="e.g. Luke"><label class="f">Exam date</label><input id="e0" type="date" value="${S.exam}"><button class="btn" style="margin-top:14px" id="go">Hit the ice</button></div>`;
   $("#go").onclick=()=>{S.name=$("#n0").value.trim()||"Player";S.exam=$("#e0").value||S.exam;save();$("#modal").classList.add("hidden");render()}}
 cloudInit();
+// ---------- automatic sync across devices (through the same Apps Script) ----------
+// Merge two packed progress states. Same code runs in the apps and in the Apps Script.
+// Per item: keep the record with more attempts (right + wrong); attempts only ever go up, so nothing learned is lost.
+// Settings: newer device wins. XP / best streak: max. Badges: union. Daily history: max per field.
+// A reset bumps "epoch"; a newer epoch replaces everything older.
+function mergePacked(a,b){if(!a)return b;if(!b)return a;
+  if((a.epoch||0)!==(b.epoch||0))return (a.epoch||0)>(b.epoch||0)?a:b;
+  var newer=(a.updated||0)>=(b.updated||0)?a:b,older=newer===a?b:a,o={},k;
+  for(k in older)o[k]=older[k];for(k in newer)o[k]=newer[k];
+  var m={};function put(r){var c=m[r[0]];if(!c){m[r[0]]=r;return}var ta=(c[3]||0)+(c[4]||0),tb=(r[3]||0)+(r[4]||0);if(tb>ta||(tb===ta&&(r[2]||0)>(c[2]||0)))m[r[0]]=r}
+  (older.W||[]).forEach(put);(newer.W||[]).forEach(put);o.W=Object.keys(m).map(function(x){return m[x]});
+  o.xp=Math.max(a.xp||0,b.xp||0);o.best=Math.max(a.best||0,b.best||0);
+  var st=(a.last||"")>=(b.last||"")?a:b;o.streak=st.streak||0;o.last=st.last||"";o.freezeUsed=st.freezeUsed||"";
+  var bs={};(a.badges||[]).concat(b.badges||[]).forEach(function(x){bs[x]=1});o.badges=Object.keys(bs);
+  o.hist={};[a.hist||{},b.hist||{}].forEach(function(h){Object.keys(h).forEach(function(d){var x=o.hist[d]||(o.hist[d]={});Object.keys(h[d]).forEach(function(f){x[f]=Math.max(x[f]||0,h[d][f]||0)})})});
+  if(a.check||b.check){o.check={};var ca=older.check||{},cb=newer.check||{};for(k in ca)o.check[k]=ca[k];for(k in cb)o.check[k]=cb[k]}
+  if(a.placed||b.placed)o.placed=true;
+  o.ik=(a.ik==="n"||b.ik==="n")?"n":(newer.ik||older.ik||"s");
+  o.updated=Math.max(a.updated||0,b.updated||0);return o}
+
+let syncBusy=false,lastSync=0,lastPush=0,syncErr=false;
+const appBusy=()=>(typeof inQuiz!=="undefined"&&inQuiz)||!!document.querySelector(".opt:not([disabled]),.kp");
+const decP=s=>JSON.parse(decodeURIComponent(escape(atob(String(s).slice(3)))));
+const encP=o=>"z1."+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const LOCAL_ONLY=["reportUrl","token","pending"];
+function cleanForSync(o){o=Object.assign({},o);LOCAL_ONLY.forEach(k=>delete o[k]);let s=encP(o);if(s.length>48000){o.hist={};s=encP(o)}return s}
+function syncReady(){return !!(S.reportUrl&&S.name)}
+function syncStatus(){if(!syncReady())return _T("Off — add the sheet URL and your name to turn it on","未開啟：填入試算表網址和名字後就會自動同步");
+  return syncErr?_T("Last sync failed — will retry","上次同步失敗，稍後會自動重試"):lastSync?_T("On · last synced ","已開啟 · 上次同步 ")+new Date(lastSync).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):_T("On · waiting for first sync","已開啟 · 等待第一次同步")}
+function showSync(){const e=document.getElementById("syncSt");if(e)e.textContent=syncStatus()}
+function pushState(packedObj){if(!syncReady())return;lastPush=Date.now();
+  try{fetch(S.reportUrl,{method:"POST",mode:"no-cors",keepalive:true,headers:{"Content-Type":"text/plain"},
+    body:JSON.stringify({op:"sync",app:APPID,name:S.name,token:S.token||"",state:cleanForSync(packedObj||decP(packState(S)))})}).catch(()=>{})}catch(e){}}
+async function syncNow(push,manual){if(!syncReady()){if(manual)toast(_T("Add the sheet URL and your name first","請先填入試算表網址和名字"));return}
+  if(syncBusy||!navigator.onLine){if(manual&&!navigator.onLine)toast(_T("Offline — will sync later","目前離線，之後會自動同步"));return}
+  syncBusy=true;try{
+    const u=S.reportUrl+(S.reportUrl.includes("?")?"&":"?")+"op=pull&name="+encodeURIComponent(S.name)+"&app="+APPID+(S.token?"&token="+encodeURIComponent(S.token):"");
+    const j=await (await fetch(u)).json();if(j.error)throw new Error(j.error);
+    const local=decP(packState(S));let merged=local;
+    if(j.found&&j.state){const remote=decP(j.state);if(!remote.app||remote.app===APPID)merged=mergePacked(local,remote)}
+    const changed=JSON.stringify(merged.W)!==JSON.stringify(local.W)||merged.xp!==local.xp||merged.epoch!==local.epoch||merged.updated!==local.updated;
+    if(changed&&!appBusy()){const keep={};LOCAL_ONLY.forEach(k=>keep[k]=S[k]);S=Object.assign(fresh(),unpackState(encP(merged)),keep);
+      try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(typeof render==="function")render()}
+    if(push||changed||!j.found)pushState(merged);
+    lastSync=Date.now();syncErr=false;if(manual)toast(_T("Synced","已同步"))}
+  catch(e){syncErr=true;if(manual)toast(_T("Sync failed — check the URL and that the Apps Script is updated","同步失敗：請確認網址正確，以及 Apps Script 已更新並重新部署"))}
+  finally{syncBusy=false;showSync()}}
+{const _rep=report;report=function(){_rep();setTimeout(()=>syncNow(true),400)}}
+window.addEventListener("load",()=>setTimeout(()=>syncNow(true),800));
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncNow(false);else if(syncReady()&&(S.updated||0)>lastPush)pushState()});
+window.addEventListener("online",()=>syncNow(true));
+setInterval(()=>{if(document.visibilityState!=="visible")return;if(!lastSync||Date.now()-lastSync>5*60000)syncNow(false);else if((S.updated||0)>lastPush&&!appBusy())pushState()},45000);
+
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")r.update().catch(()=>{})})}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded||document.querySelector(".opt"))return;reloaded=true;location.reload()})}
 </script>
 </body>

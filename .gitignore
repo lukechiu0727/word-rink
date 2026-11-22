@@ -1,0 +1,55 @@
+# IMPORTANT: this file must be saved as UTF-8. A UTF-16 .gitignore silently ignores everything.
+# Edit it in VS Code, not with `echo ... >> .gitignore` in Windows PowerShell.
+
+# --- Secrets: never commit ---------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+cookies.txt
+*credentials*.json
+secrets/
+
+# --- Data files: real data never goes in git -----------------------------
+# Fake/scrubbed samples belong in tests/fixtures/ (allowed below).
+*.sqlite
+*.sqlite3
+*.db
+*.xlsx
+*.xls
+*.csv
+*.parquet
+!tests/fixtures/**
+# DSC data dictionary (schema, not data), written by scripts/export_dsc_catalog.py
+!docs/connectors/dsc/catalog/*.csv
+
+# --- Python ----------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# --- Runtime output --------------------------------------------------------
+var/
+*.log
+
+# --- Node (only if this repo has a web/ front end) -------------------------
+node_modules/
+
+# --- OS / editor -----------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+
+# --- Claude Code local settings (contain machine paths) ---------------------
+.claude/settings.local.json
+.claude/launch.json
