@@ -6,7 +6,7 @@ No accounts, no server, no tracking. Everything runs in the browser and progress
 
 ## Features
 
-- **543 words** in two decks: a Middle Level foundation, introduced first, followed by Upper Level words. Words from a teacher-supplied practice test are prioritized at the start of the Upper deck and can be filtered with the **Teacher list** chip.
+- **595 words** in two decks: a Middle Level foundation, introduced first, followed by Upper Level words. Words from a teacher-supplied practice test are prioritized at the start of the Upper deck and can be filtered with the **Teacher list** chip.
 - **Spaced repetition** (Leitner boxes): a correct answer moves a word up a box and pushes its next review further out — 1 → 3 → 7 → 14 → 30 days. A wrong answer sends it back to tomorrow.
 - **ISEE-style questions**: synonyms, sentence completion, definitions, and word-form questions (e.g. *reluctant → reluctantly*).
 - **Pick your theme**: 🏒 Hockey, 🏀 Basketball, 🎮 Games, or Mix. Every word has one sentence per theme.
